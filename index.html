@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Code Generator — Create QR Codes in Your Browser</title>
+<meta name="description" content="Create QR codes for links, Wi-Fi, contact cards, email, SMS, phone numbers and locations. You choose the fields. 100% in your browser — no uploads, no sign-up.">
+<style>
+  :root{
+    --emerald:#103E32; --emerald-2:#0B4F3A; --lime:#DCF5B5; --lime-strong:#C9EC8F;
+    --paper:#F7F8F2; --ink:#17352B; --muted:#5A6E64; --line:#DCE5D8;
+    --danger:#B3261E; --danger-bg:#FDECEA; --ok:#146C43; --ok-bg:#E6F4EA;
+    --radius:14px; --shadow:0 10px 30px rgba(16,62,50,.12);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+    background:var(--paper); color:var(--ink); line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:20px 16px 40px}
+  header.hero{
+    background:linear-gradient(135deg,var(--emerald) 0%,var(--emerald-2) 100%);
+    color:#fff;border-radius:var(--radius);padding:28px 26px;box-shadow:var(--shadow);
+  }
+  header.hero h1{margin:0 0 6px;font-size:clamp(26px,4.5vw,38px);letter-spacing:.2px}
+  header.hero h1 .accent{color:var(--lime)}
+  header.hero p{margin:0;max-width:660px;color:#EAF3E4;font-size:clamp(14px,2.4vw,16px)}
+  .badge{
+    display:inline-block;background:var(--lime);color:var(--emerald);font-weight:700;
+    font-size:12px;padding:3px 10px;border-radius:999px;margin-bottom:12px;letter-spacing:.4px;
+  }
+  .grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;margin-top:18px}
+  @media (max-width:860px){.grid{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+  .card h2{margin:0 0 10px;font-size:17px;color:var(--emerald)}
+  .card h3{margin:16px 0 8px;font-size:14px;color:var(--emerald);text-transform:uppercase;letter-spacing:.6px}
+  .types{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px;margin-bottom:6px}
+  .types button{
+    padding:10px 6px;border-radius:10px;border:1.5px solid var(--line);background:#fff;
+    font-size:13.5px;font-weight:600;color:var(--ink);cursor:pointer;
+  }
+  .types button[aria-pressed="true"]{background:var(--emerald);border-color:var(--emerald);color:#fff}
+  .grp{display:none}
+  .grp.active{display:block}
+  .field{margin-top:10px}
+  .field label{display:block;font-size:13.5px;font-weight:600;margin-bottom:3px}
+  .field label .req{color:var(--danger)}
+  .field .hint{font-size:12px;color:var(--muted);font-weight:400}
+  .field input[type=text],.field input[type=email],.field input[type=tel],.field input[type=number],
+  .field select,.field textarea{
+    width:100%;padding:9px;border-radius:10px;border:1.5px solid var(--line);
+    font-size:14px;color:var(--ink);background:#fff;font-family:inherit;
+  }
+  .field textarea{resize:vertical;min-height:56px}
+  .field.invalid input,.field.invalid textarea,.field.invalid select{border-color:var(--danger);background:#FFF8F7}
+  .ferr{display:none;font-size:12.5px;color:var(--danger);margin-top:3px}
+  .field.invalid .ferr{display:block}
+  .check{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;margin-top:12px;cursor:pointer}
+  .check input{width:17px;height:17px;accent-color:var(--emerald)}
+  .cols2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media (max-width:520px){.cols2{grid-template-columns:1fr}}
+  .msg{display:none;border-radius:10px;padding:10px 12px;font-size:14px;margin-top:12px;white-space:pre-line}
+  .msg.error{display:block;background:var(--danger-bg);color:var(--danger);border:1px solid #F3C2BE}
+  .msg.ok{display:block;background:var(--ok-bg);color:var(--ok);border:1px solid #BFE3CC}
+  .seg{display:flex;flex-wrap:wrap;gap:8px}
+  .seg button{
+    flex:1 1 64px;padding:9px 6px;border-radius:10px;border:1.5px solid var(--line);
+    background:#fff;font-size:13.5px;font-weight:600;color:var(--ink);cursor:pointer;
+  }
+  .seg button[aria-pressed="true"]{background:var(--emerald);border-color:var(--emerald);color:#fff}
+  .row{margin-top:14px}
+  .row>label{display:block;font-size:14px;font-weight:600;margin-bottom:5px}
+  select.size{
+    width:100%;padding:9px;border-radius:10px;border:1.5px solid var(--line);font-size:14px;background:#fff;color:var(--ink);
+  }
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+  .btn{
+    appearance:none;border:none;cursor:pointer;border-radius:10px;padding:12px 18px;
+    font-size:15px;font-weight:700;text-decoration:none;display:inline-block;text-align:center;
+  }
+  .btn.primary{background:var(--emerald);color:#fff;flex:1 1 180px}
+  .btn.primary:hover{background:var(--emerald-2)}
+  .btn.lime{background:var(--lime);color:var(--emerald);flex:1 1 140px}
+  .btn.lime:hover{background:var(--lime-strong)}
+  .btn.ghost{background:#fff;color:var(--emerald);border:1.5px solid var(--emerald)}
+  .preview-box{
+    background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;text-align:center;
+  }
+  .preview-box canvas{max-width:100%;height:auto;image-rendering:pixelated}
+  .preview-empty{color:var(--muted);font-size:14px;padding:34px 10px}
+  .payload{
+    width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--ink);
+    background:#FBFCF8;border:1.5px solid var(--line);border-radius:10px;padding:9px;resize:vertical;min-height:64px;
+  }
+  .meta-line{font-size:13px;color:var(--muted);margin-top:8px}
+  .meta-line strong{color:var(--ink)}
+  .privacy{margin-top:14px;font-size:13px;color:var(--muted);text-align:center}
+  footer{margin-top:10px;text-align:center;font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="badge">ASIF SAAS STUDIO</span>
+    <h1>QR Code <span class="accent">Generator</span></h1>
+    <p>Create a QR code for a link, Wi-Fi network, contact card, email, SMS, phone number or location — you decide exactly which fields go in. Generated on your device, ready to download as PNG or SVG.</p>
+  </header>
+
+  <div class="grid">
+    <!-- LEFT: content + settings -->
+    <section class="card" aria-label="QR content">
+      <h2>1 · Choose what the code contains</h2>
+      <div class="types" id="types" role="group" aria-label="Content type">
+        <button type="button" data-type="text" aria-pressed="true">📝 Text</button>
+        <button type="button" data-type="url" aria-pressed="false">🔗 Website</button>
+        <button type="button" data-type="wifi" aria-pressed="false">📶 Wi-Fi</button>
+        <button type="button" data-type="vcard" aria-pressed="false">👤 Contact</button>
+        <button type="button" data-type="email" aria-pressed="false">✉️ Email</button>
+        <button type="button" data-type="sms" aria-pressed="false">💬 SMS</button>
+        <button type="button" data-type="phone" aria-pressed="false">📞 Phone</button>
+        <button type="button" data-type="geo" aria-pressed="false">📍 Location</button>
+      </div>
+
+      <!-- TEXT -->
+      <div class="grp active" id="grp-text">
+        <div class="field" id="f-text-wrap">
+          <label for="f-text">Text <span class="req">*</span></label>
+          <textarea id="f-text" placeholder="Type or paste any text…"></textarea>
+          <div class="ferr" id="e-text"></div>
+        </div>
+      </div>
+
+      <!-- URL -->
+      <div class="grp" id="grp-url">
+        <div class="field" id="f-url-wrap">
+          <label for="f-url">Website address <span class="req">*</span></label>
+          <input type="text" id="f-url" placeholder="example.com or https://example.com/page" autocomplete="off">
+          <div class="hint">If you leave out https:// it is added for you.</div>
+          <div class="ferr" id="e-url"></div>
+        </div>
+      </div>
+
+      <!-- WIFI -->
+      <div class="grp" id="grp-wifi">
+        <div class="field" id="f-wifi-ssid-wrap">
+          <label for="f-wifi-ssid">Network name (SSID) <span class="req">*</span></label>
+          <input type="text" id="f-wifi-ssid" autocomplete="off">
+          <div class="ferr" id="e-wifi-ssid"></div>
+        </div>
+        <div class="cols2">
+          <div class="field">
+            <label for="f-wifi-enc">Security</label>
+            <select id="f-wifi-enc">
+              <option value="WPA" selected>WPA / WPA2 / WPA3</option>
+              <option value="WEP">WEP</option>
+              <option value="nopass">No password</option>
+            </select>
+          </div>
+          <div class="field" id="f-wifi-pass-wrap">
+            <label for="f-wifi-pass">Password <span class="req">*</span></label>
+            <input type="text" id="f-wifi-pass" autocomplete="off">
+            <div class="ferr" id="e-wifi-pass"></div>
+          </div>
+        </div>
+        <label class="check"><input type="checkbox" id="f-wifi-hidden"> Hidden network</label>
+      </div>
+
+      <!-- VCARD -->
+      <div class="grp" id="grp-vcard">
+        <div class="field" id="f-vc-name-wrap">
+          <label for="f-vc-name">Full name <span class="req">*</span></label>
+          <input type="text" id="f-vc-name" autocomplete="off">
+          <div class="ferr" id="e-vc-name"></div>
+        </div>
+        <div class="cols2">
+          <div class="field"><label for="f-vc-org">Organisation</label><input type="text" id="f-vc-org"></div>
+          <div class="field"><label for="f-vc-title">Job title</label><input type="text" id="f-vc-title"></div>
+        </div>
+        <div class="cols2">
+          <div class="field" id="f-vc-phone-wrap">
+            <label for="f-vc-phone">Phone</label><input type="tel" id="f-vc-phone">
+            <div class="ferr" id="e-vc-phone"></div>
+          </div>
+          <div class="field" id="f-vc-email-wrap">
+            <label for="f-vc-email">Email</label><input type="email" id="f-vc-email">
+            <div class="ferr" id="e-vc-email"></div>
+          </div>
+        </div>
+        <div class="field"><label for="f-vc-url">Website</label><input type="text" id="f-vc-url"></div>
+        <div class="field"><label for="f-vc-street">Street address</label><input type="text" id="f-vc-street"></div>
+        <div class="cols2">
+          <div class="field"><label for="f-vc-city">City</label><input type="text" id="f-vc-city"></div>
+          <div class="field"><label for="f-vc-zip">Postal code</label><input type="text" id="f-vc-zip"></div>
+        </div>
+        <div class="field"><label for="f-vc-country">Country</label><input type="text" id="f-vc-country"></div>
+        <div class="field"><label for="f-vc-note">Note</label><input type="text" id="f-vc-note"></div>
+      </div>
+
+      <!-- EMAIL -->
+      <div class="grp" id="grp-email">
+        <div class="field" id="f-em-to-wrap">
+          <label for="f-em-to">Recipient email <span class="req">*</span></label>
+          <input type="email" id="f-em-to" placeholder="name@example.com">
+          <div class="ferr" id="e-em-to"></div>
+        </div>
+        <div class="field"><label for="f-em-subject">Subject</label><input type="text" id="f-em-subject"></div>
+        <div class="field"><label for="f-em-body">Message</label><textarea id="f-em-body"></textarea></div>
+      </div>
+
+      <!-- SMS -->
+      <div class="grp" id="grp-sms">
+        <div class="field" id="f-sms-number-wrap">
+          <label for="f-sms-number">Phone number <span class="req">*</span></label>
+          <input type="tel" id="f-sms-number" placeholder="+92 300 1234567">
+          <div class="ferr" id="e-sms-number"></div>
+        </div>
+        <div class="field"><label for="f-sms-msg">Message</label><textarea id="f-sms-msg"></textarea></div>
+      </div>
+
+      <!-- PHONE -->
+      <div class="grp" id="grp-phone">
+        <div class="field" id="f-ph-number-wrap">
+          <label for="f-ph-number">Phone number <span class="req">*</span></label>
+          <input type="tel" id="f-ph-number" placeholder="+92 300 1234567">
+          <div class="ferr" id="e-ph-number"></div>
+        </div>
+      </div>
+
+      <!-- GEO -->
+      <div class="grp" id="grp-geo">
+        <div class="cols2">
+          <div class="field" id="f-geo-lat-wrap">
+            <label for="f-geo-lat">Latitude <span class="req">*</span> <span class="hint">−90 to 90</span></label>
+            <input type="text" id="f-geo-lat" placeholder="33.7294" inputmode="decimal">
+            <div class="ferr" id="e-geo-lat"></div>
+          </div>
+          <div class="field" id="f-geo-lng-wrap">
+            <label for="f-geo-lng">Longitude <span class="req">*</span> <span class="hint">−180 to 180</span></label>
+            <input type="text" id="f-geo-lng" placeholder="73.0931" inputmode="decimal">
+            <div class="ferr" id="e-geo-lng"></div>
+          </div>
+        </div>
+        <p class="hint" style="font-size:12.5px;color:var(--muted)">Tip: in Google Maps, long-press (or right-click) a place to read its latitude and longitude.</p>
+      </div>
+
+      <div class="msg" id="formMsg" role="alert"></div>
+
+      <h3>Quality &amp; size</h3>
+      <div class="row" style="margin-top:4px">
+        <label>Error correction <span style="font-weight:400;color:var(--muted)">— higher survives more damage, but holds less text</span></label>
+        <div class="seg" id="ecSeg" role="group" aria-label="Error correction level">
+          <button type="button" data-ec="L" aria-pressed="false">L · 7%</button>
+          <button type="button" data-ec="M" aria-pressed="true">M · 15%</button>
+          <button type="button" data-ec="Q" aria-pressed="false">Q · 25%</button>
+          <button type="button" data-ec="H" aria-pressed="false">H · 30%</button>
+        </div>
+      </div>
+      <div class="row">
+        <label for="pngSize">PNG size</label>
+        <select class="size" id="pngSize">
+          <option value="256">256 px — small</option>
+          <option value="512" selected>512 px — standard</option>
+          <option value="1024">1024 px — print</option>
+          <option value="2048">2048 px — large print</option>
+        </select>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" id="go">⬛ Generate QR Code</button>
+      </div>
+    </section>
+
+    <!-- RIGHT: preview -->
+    <section class="card" aria-label="Preview and download">
+      <h2>2 · Your QR code</h2>
+      <div class="preview-box">
+        <div class="preview-empty" id="previewEmpty">Fill in the fields and tap <strong>Generate QR Code</strong>.<br>Your code will appear here.</div>
+        <canvas id="qrCanvas" width="0" height="0" style="display:none" aria-label="QR code preview"></canvas>
+      </div>
+      <div class="meta-line" id="qrMeta"></div>
+
+      <h3>Encoded content</h3>
+      <textarea class="payload" id="payloadView" readonly aria-label="Exact content encoded in the QR code"></textarea>
+      <div class="meta-line" id="payloadMeta"></div>
+
+      <div class="actions">
+        <a class="btn lime" id="dlPng" href="#" download="qr-code.png" style="pointer-events:none;opacity:.45">⬇ Download PNG</a>
+        <a class="btn ghost" id="dlSvg" href="#" download="qr-code.svg" style="pointer-events:none;opacity:.45">⬇ Download SVG</a>
+      </div>
+      <p style="font-size:13.5px;color:var(--muted);margin:14px 0 0">
+        Always test a printed code with your phone before sharing it widely. Codes with more content
+        have denser patterns — print those a little larger.
+      </p>
+    </section>
+  </div>
+
+  <p class="privacy">🔒 Private by design: your information never leaves your device — the code is generated locally, with no uploads, no accounts and no tracking.</p>
+  <footer>QR Code Generator · v1.0 · Asif SaaS Studio</footer>
+</div>
+
+<script>
+"use strict";
+/* ================= PURE CORE (payload builders, validation, QR encoder — no DOM) ================= */
+/* PURE-CORE-START */
+/* QR spec tables for versions 1–20 (verified against a reference encoder).
+   ec[v] = [L, M, Q, H] entries of [ecCodewordsPerBlock, [[blocks, dataCwPerBlock], ...]] */
+var QR_TABLES = {"ec":{"1":[[7,[[1,19]]],[10,[[1,16]]],[13,[[1,13]]],[17,[[1,9]]]],"2":[[10,[[1,34]]],[16,[[1,28]]],[22,[[1,22]]],[28,[[1,16]]]],"3":[[15,[[1,55]]],[26,[[1,44]]],[18,[[2,17]]],[22,[[2,13]]]],"4":[[20,[[1,80]]],[18,[[2,32]]],[26,[[2,24]]],[16,[[4,9]]]],"5":[[26,[[1,108]]],[24,[[2,43]]],[18,[[2,15],[2,16]]],[22,[[2,11],[2,12]]]],"6":[[18,[[2,68]]],[16,[[4,27]]],[24,[[4,19]]],[28,[[4,15]]]],"7":[[20,[[2,78]]],[18,[[4,31]]],[18,[[2,14],[4,15]]],[26,[[4,13],[1,14]]]],"8":[[24,[[2,97]]],[22,[[2,38],[2,39]]],[22,[[4,18],[2,19]]],[26,[[4,14],[2,15]]]],"9":[[30,[[2,116]]],[22,[[3,36],[2,37]]],[20,[[4,16],[4,17]]],[24,[[4,12],[4,13]]]],"10":[[18,[[2,68],[2,69]]],[26,[[4,43],[1,44]]],[24,[[6,19],[2,20]]],[28,[[6,15],[2,16]]]],"11":[[20,[[4,81]]],[30,[[1,50],[4,51]]],[28,[[4,22],[4,23]]],[24,[[3,12],[8,13]]]],"12":[[24,[[2,92],[2,93]]],[22,[[6,36],[2,37]]],[26,[[4,20],[6,21]]],[28,[[7,14],[4,15]]]],"13":[[26,[[4,107]]],[22,[[8,37],[1,38]]],[24,[[8,20],[4,21]]],[22,[[12,11],[4,12]]]],"14":[[30,[[3,115],[1,116]]],[24,[[4,40],[5,41]]],[20,[[11,16],[5,17]]],[24,[[11,12],[5,13]]]],"15":[[22,[[5,87],[1,88]]],[24,[[5,41],[5,42]]],[30,[[5,24],[7,25]]],[24,[[11,12],[7,13]]]],"16":[[24,[[5,98],[1,99]]],[28,[[7,45],[3,46]]],[24,[[15,19],[2,20]]],[30,[[3,15],[13,16]]]],"17":[[28,[[1,107],[5,108]]],[28,[[10,46],[1,47]]],[28,[[1,22],[15,23]]],[28,[[2,14],[17,15]]]],"18":[[30,[[5,120],[1,121]]],[26,[[9,43],[4,44]]],[28,[[17,22],[1,23]]],[28,[[2,14],[19,15]]]],"19":[[28,[[3,113],[4,114]]],[26,[[3,44],[11,45]]],[26,[[17,21],[4,22]]],[26,[[9,13],[16,14]]]],"20":[[28,[[3,107],[5,108]]],[26,[[3,41],[13,42]]],[30,[[15,24],[5,25]]],[28,[[15,15],[10,16]]]]},"align":{"1":[],"2":[6,18],"3":[6,22],"4":[6,26],"5":[6,30],"6":[6,34],"7":[6,22,38],"8":[6,24,42],"9":[6,26,46],"10":[6,28,50],"11":[6,30,54],"12":[6,32,58],"13":[6,34,62],"14":[6,26,46,66],"15":[6,26,48,70],"16":[6,26,50,74],"17":[6,30,54,78],"18":[6,30,56,82],"19":[6,30,58,86],"20":[6,34,62,90]},"dataCw":{"1":{"L":19,"M":16,"Q":13,"H":9},"2":{"L":34,"M":28,"Q":22,"H":16},"3":{"L":55,"M":44,"Q":34,"H":26},"4":{"L":80,"M":64,"Q":48,"H":36},"5":{"L":108,"M":86,"Q":62,"H":46},"6":{"L":136,"M":108,"Q":76,"H":60},"7":{"L":156,"M":124,"Q":88,"H":66},"8":{"L":194,"M":154,"Q":110,"H":86},"9":{"L":232,"M":182,"Q":132,"H":100},"10":{"L":274,"M":216,"Q":154,"H":122},"11":{"L":324,"M":254,"Q":180,"H":140},"12":{"L":370,"M":290,"Q":206,"H":158},"13":{"L":428,"M":334,"Q":244,"H":180},"14":{"L":461,"M":365,"Q":261,"H":197},"15":{"L":523,"M":415,"Q":295,"H":223},"16":{"L":589,"M":453,"Q":325,"H":253},"17":{"L":647,"M":507,"Q":367,"H":283},"18":{"L":721,"M":563,"Q":397,"H":313},"19":{"L":795,"M":627,"Q":445,"H":341},"20":{"L":861,"M":669,"Q":485,"H":385}}};
+var QR_EC_INDEX = { L: 0, M: 1, Q: 2, H: 3 };
+var QR_EC_BITS = { L: 1, M: 0, Q: 3, H: 2 };
+var QR_REMAINDER = [0,7,7,7,7,7,7,0,0,0,0,0,0,0,3,3,3,3,3,3,3]; // index = version
+var QR_MAX_VERSION = 20;
+
+/* ---- Galois field GF(256), primitive polynomial 0x11D ---- */
+var GF_EXP = [], GF_LOG = [];
+(function(){
+  var x = 1;
+  for (var i = 0; i < 255; i++){
+    GF_EXP[i] = x; GF_LOG[x] = i;
+    x <<= 1; if (x & 0x100) x ^= 0x11D;
+  }
+  for (var j = 255; j < 512; j++) GF_EXP[j] = GF_EXP[j - 255];
+})();
+function gfMul(a, b){ return (a && b) ? GF_EXP[GF_LOG[a] + GF_LOG[b]] : 0; }
+
+/* Reed–Solomon divisor (generator) for a given EC length */
+function rsDivisor(degree){
+  var result = []; for (var i = 0; i < degree; i++) result.push(0);
+  result[degree - 1] = 1;
+  var root = 1;
+  for (var d = 0; d < degree; d++){
+    for (var j = 0; j < result.length; j++){
+      result[j] = gfMul(result[j], root);
+      if (j + 1 < result.length) result[j] ^= result[j + 1];
+    }
+    root = gfMul(root, 2);
+  }
+  return result;
+}
+function rsRemainder(data, divisor){
+  var result = []; for (var i = 0; i < divisor.length; i++) result.push(0);
+  for (var k = 0; k < data.length; k++){
+    var factor = data[k] ^ result.shift();
+    result.push(0);
+    for (var j = 0; j < divisor.length; j++) result[j] ^= gfMul(divisor[j], factor);
+  }
+  return result;
+}
+
+/* Total data codewords of a version at an EC level */
+function qrDataCodewords(version, level){
+  var entry = QR_TABLES.ec[version][QR_EC_INDEX[level]];
+  var total = 0;
+  entry[1].forEach(function(g){ total += g[0] * g[1]; });
+  return total;
+}
+/* Max UTF-8 bytes that fit at the largest supported version */
+function qrMaxBytes(level){
+  var dcw = qrDataCodewords(QR_MAX_VERSION, level);
+  return Math.floor((dcw * 8 - 20) / 8); // 4 mode bits + 16 length bits at v>=10
+}
+
+/* Build the padded data codewords for the smallest fitting version; null if too long */
+function qrDataEncode(bytes, level){
+  for (var v = 1; v <= QR_MAX_VERSION; v++){
+    var dcw = qrDataCodewords(v, level);
+    var capBits = dcw * 8;
+    var lenBits = (v <= 9) ? 8 : 16;
+    if (4 + lenBits + bytes.length * 8 > capBits) continue;
+    var bits = [];
+    function pushBits(val, n){ for (var i = n - 1; i >= 0; i--) bits.push((val >>> i) & 1); }
+    pushBits(4, 4); pushBits(bytes.length, lenBits);
+    bytes.forEach(function(b){ pushBits(b, 8); });
+    var term = Math.min(4, capBits - bits.length);
+    for (var t = 0; t < term; t++) bits.push(0);
+    while (bits.length % 8) bits.push(0);
+    var out = [];
+    for (var i = 0; i < bits.length; i += 8){
+      var byte = 0; for (var j = 0; j < 8; j++) byte = (byte << 1) | bits[i + j];
+      out.push(byte);
+    }
+    var pads = [0xEC, 0x11], p = 0;
+    while (out.length < dcw) out.push(pads[p++ % 2]);
+    return { version: v, data: out };
+  }
+  return null;
+}
+
+/* Split into blocks, compute EC, interleave → final codeword sequence */
+function qrInterleave(data, version, level){
+  var entry = QR_TABLES.ec[version][QR_EC_INDEX[level]];
+  var ecLen = entry[0], groups = entry[1];
+  var blocks = [], ecBlocks = [], idx = 0, divisor = rsDivisor(ecLen);
+  groups.forEach(function(g){
+    for (var b = 0; b < g[0]; b++){
+      var block = data.slice(idx, idx + g[1]); idx += g[1];
+      blocks.push(block); ecBlocks.push(rsRemainder(block, divisor));
+    }
+  });
+  var out = [], maxLen = 0;
+  blocks.forEach(function(b){ if (b.length > maxLen) maxLen = b.length; });
+  for (var col = 0; col < maxLen; col++)
+    blocks.forEach(function(b){ if (col < b.length) out.push(b[col]); });
+  for (var e = 0; e < ecLen; e++)
+    ecBlocks.forEach(function(b){ out.push(b[e]); });
+  return out;
+}
+
+/* ---- Matrix construction ---- */
+function qrBlankMatrix(size){
+  var m = [], r = [];
+  for (var i = 0; i < size; i++){ m.push(new Array(size).fill(0)); r.push(new Array(size).fill(false)); }
+  return { m: m, r: r };
+}
+function qrSet(ctx, x, y, val){ // x = column, y = row
+  if (x >= 0 && x < ctx.m.length && y >= 0 && y < ctx.m.length){ ctx.m[y][x] = val; ctx.r[y][x] = true; }
+}
+function qrDrawFinders(ctx){
+  var size = ctx.m.length;
+  function finder(cx, cy){
+    for (var dy = -4; dy <= 4; dy++) for (var dx = -4; dx <= 4; dx++){
+      var xx = cx + dx, yy = cy + dy;
+      var dist = Math.max(Math.abs(dx), Math.abs(dy));
+      qrSet(ctx, xx, yy, (dist !== 2 && dist !== 4) ? 1 : 0);
+    }
+  }
+  finder(3, 3); finder(size - 4, 3); finder(3, size - 4);
+}
+function qrDrawAlignment(ctx, version){
+  var pos = QR_TABLES.align[version] || [];
+  var size = ctx.m.length;
+  for (var i = 0; i < pos.length; i++) for (var j = 0; j < pos.length; j++){
+    var cx = pos[i], cy = pos[j];
+    // skip positions overlapping the finder patterns
+    if ((cx <= 8 && cy <= 8) || (cx >= size - 9 && cy <= 8) || (cx <= 8 && cy >= size - 9)) continue;
+    for (var dy = -2; dy <= 2; dy++) for (var dx = -2; dx <= 2; dx++){
+      var dist = Math.max(Math.abs(dx), Math.abs(dy));
+      qrSet(ctx, cx + dx, cy + dy, dist !== 1 ? 1 : 0);
+    }
+  }
+}
+function qrFormatBits(level, mask){
+  var data = (QR_EC_BITS[level] << 3) | mask;
+  var v = data << 10;
+  for (var i = 14; i >= 10; i--) if ((v >>> i) & 1) v ^= 0x537 << (i - 10);
+  return ((data << 10) | (v & 0x3FF)) ^ 0x5412;
+}
+function qrVersionBits(version){
+  var rem = version;
+  for (var i = 0; i < 12; i++) rem = (rem << 1) ^ (((rem >>> 11) & 1) ? 0x1F25 : 0);
+  return (version << 12) | (rem & 0xFFF);
+}
+function qrDrawFormatAndVersion(ctx, version, level, mask){
+  var size = ctx.m.length;
+  var bits = qrFormatBits(level, mask);
+  function bit(i){ return (bits >>> i) & 1; }
+  var i;
+  for (i = 0; i <= 6; i++) qrSet(ctx, 8, i, bit(i));
+  qrSet(ctx, 8, 7, bit(6)); qrSet(ctx, 8, 8, bit(7)); qrSet(ctx, 7, 8, bit(8));
+  for (i = 9; i < 15; i++) qrSet(ctx, 14 - i, 8, bit(i));
+  for (i = 0; i < 8; i++) qrSet(ctx, size - 1 - i, 8, bit(i));
+  for (i = 8; i < 15; i++) qrSet(ctx, 8, size - 15 + i, bit(i));
+  qrSet(ctx, 8, size - 8, 1); // dark module
+  if (version >= 7){
+    var vb = qrVersionBits(version);
+    for (i = 0; i < 18; i++){
+      var b = (vb >>> i) & 1;
+      qrSet(ctx, size - 11 + (i % 3), Math.floor(i / 3), b);
+      qrSet(ctx, Math.floor(i / 3), size - 11 + (i % 3), b);
+    }
+  }
+}
+function qrMaskCondition(mask, r, c){ // r = row, c = column
+  switch (mask){
+    case 0: return (r + c) % 2 === 0;
+    case 1: return r % 2 === 0;
+    case 2: return c % 3 === 0;
+    case 3: return (r + c) % 3 === 0;
+    case 4: return (Math.floor(r / 2) + Math.floor(c / 3)) % 2 === 0;
+    case 5: return (r * c) % 2 + (r * c) % 3 === 0;
+    case 6: return ((r * c) % 2 + (r * c) % 3) % 2 === 0;
+    case 7: return ((r + c) % 2 + (r * c) % 3) % 2 === 0;
+  }
+  return false;
+}
+function qrPenalty(m){
+  var size = m.length, score = 0, r, c, i, j;
+  // Rule 1: runs of >= 5
+  function runs(line){
+    var s = 0, run = 1;
+    for (var i = 1; i <= line.length; i++){
+      if (i < line.length && line[i] === line[i - 1]) run++;
+      else { if (run >= 5) s += run - 2; run = 1; }
+    }
+    return s;
+  }
+  for (r = 0; r < size; r++){ score += runs(m[r]); var col = []; for (c = 0; c < size; c++) col.push(m[c][r]); score += runs(col); }
+  // Rule 2: 2x2 blocks
+  for (r = 0; r < size - 1; r++) for (c = 0; c < size - 1; c++)
+    if (m[r][c] === m[r][c + 1] && m[r][c] === m[r + 1][c] && m[r][c] === m[r + 1][c + 1]) score += 3;
+  // Rule 3: finder-like patterns with a 4-module quiet zone on either side
+  var pat1 = [1,0,1,1,1,0,1,0,0,0,0], pat2 = [0,0,0,0,1,0,1,1,1,0,1];
+  function countPat(line){
+    var s = 0;
+    for (var i = 0; i + 11 <= line.length; i++){
+      var w = line.slice(i, i + 11);
+      var eq = function(p){ for (var j = 0; j < 11; j++) if (w[j] !== p[j]) return false; return true; };
+      if (eq(pat1) || eq(pat2)) s += 40;
+    }
+    return s;
+  }
+  for (r = 0; r < size; r++){ score += countPat(m[r]); var col2 = []; for (c = 0; c < size; c++) col2.push(m[c][r]); score += countPat(col2); }
+  // Rule 4: dark-module proportion
+  var dark = 0;
+  for (r = 0; r < size; r++) for (c = 0; c < size; c++) dark += m[r][c];
+  var total = size * size;
+  var k = Math.ceil(Math.abs(dark * 20 - total * 10) / total) - 1;
+  if (k > 0) score += k * 10;
+  return score;
+}
+
+/* Encode text into a QR matrix. forceMask: 0–7 or -1/undefined for automatic.
+   Returns { version, size, matrix } or null when the text is too long. */
+function qrEncode(text, level, forceMask){
+  var bytes = Array.prototype.slice.call(new TextEncoder().encode(text));
+  var enc = qrDataEncode(bytes, level);
+  if (!enc) return null;
+  var codewords = qrInterleave(enc.data, enc.version, level);
+  var bits = [];
+  codewords.forEach(function(b){ for (var i = 7; i >= 0; i--) bits.push((b >>> i) & 1); });
+  for (var rb = 0; rb < QR_REMAINDER[enc.version]; rb++) bits.push(0);
+
+  var size = 17 + 4 * enc.version;
+  var best = null, bestPenalty = Infinity;
+  var masks = (forceMask !== undefined && forceMask >= 0) ? [forceMask] : [0,1,2,3,4,5,6,7];
+  masks.forEach(function(mask){
+    var ctx = qrBlankMatrix(size);
+    qrDrawFinders(ctx);
+    // timing patterns
+    for (var i = 0; i < size; i++){
+      if (!ctx.r[6][i]) qrSet(ctx, i, 6, i % 2 === 0 ? 1 : 0);
+      if (!ctx.r[i][6]) qrSet(ctx, 6, i, i % 2 === 0 ? 1 : 0);
+    }
+    qrDrawAlignment(ctx, enc.version);
+    qrDrawFormatAndVersion(ctx, enc.version, level, mask);
+    // data placement, zigzag from bottom-right, skipping column 6
+    var bitIdx = 0;
+    for (var right = size - 1; right >= 1; right -= 2){
+      if (right === 6) right = 5;
+      for (var vert = 0; vert < size; vert++){
+        for (var j = 0; j < 2; j++){
+          var x = right - j;
+          var upward = ((right + 1) & 2) === 0;
+          var y = upward ? size - 1 - vert : vert;
+          if (!ctx.r[y][x]){
+            var bit = bitIdx < bits.length ? bits[bitIdx] : 0; bitIdx++;
+            if (qrMaskCondition(mask, y, x)) bit ^= 1;
+            ctx.m[y][x] = bit;
+          }
+        }
+      }
+    }
+    if (masks.length === 1){ best = ctx.m; }
+    else {
+      var pen = qrPenalty(ctx.m);
+      if (pen < bestPenalty){ bestPenalty = pen; best = ctx.m; }
+    }
+  });
+  return { version: enc.version, size: size, matrix: best };
+}
+
+/* Render a matrix as a standalone SVG string (4-module quiet zone) */
+function qrSvgString(matrix, modulePx){
+  var size = matrix.length, total = size + 8;
+  var px = modulePx || 8;
+  var d = "";
+  for (var r = 0; r < size; r++) for (var c = 0; c < size; c++)
+    if (matrix[r][c]) d += "M" + (c + 4) + " " + (r + 4) + "h1v1h-1Z";
+  return "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" + (total * px) +
+    "\" height=\"" + (total * px) + "\" viewBox=\"0 0 " + total + " " + total +
+    "\"><rect width=\"100%\" height=\"100%\" fill=\"#ffffff\"/><path d=\"" + d + "\" fill=\"#000000\"/></svg>";
+}
+
+/* ================= PAYLOAD BUILDERS + VALIDATION =================
+   Each returns { payload } or { errors: { fieldKey: message } } */
+function escMeCard(s){ return String(s).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/"/g, "\\\"").replace(/:/g, "\\:").replace(/\r?\n/g, "\\n"); }
+function escVCard(s){ return String(s).replace(/\\/g, "\\\\").replace(/\r?\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;"); }
+var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+var PHONE_RE = /^\+?[0-9\s()\-]{5,24}$/;
+function cleanPhone(s){ return String(s).replace(/[\s()]/g, ""); }
+
+function buildPayload(type, f){
+  var errors = {}, payload = "";
+  function req(key, val, msg){ if (!String(val || "").trim()){ errors[key] = msg; return ""; } return String(val).trim(); }
+  if (type === "text"){
+    payload = req("text", f.text, "Enter some text for the QR code.");
+    if (!String(f.text || "").trim()) payload = "";
+    else payload = String(f.text);
+  }
+  else if (type === "url"){
+    var u = req("url", f.url, "Enter a website address.");
+    if (u){
+      if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(u)) u = "https://" + u;
+      try { var parsed = new URL(u); if (parsed.protocol !== "http:" && parsed.protocol !== "https:") throw new Error("scheme"); payload = u; }
+      catch(e){ errors.url = "That does not look like a valid website address."; }
+    }
+  }
+  else if (type === "wifi"){
+    var ssid = req("wifiSsid", f.wifiSsid, "Enter the network name (SSID).");
+    var enc = f.wifiEnc || "WPA";
+    var pass = String(f.wifiPass || "");
+    if (enc !== "nopass" && !pass) errors.wifiPass = "Enter the Wi-Fi password, or choose “No password”.";
+    if (ssid && !errors.wifiPass){
+      payload = "WIFI:T:" + enc + ";S:" + escMeCard(ssid) + ";";
+      if (enc !== "nopass") payload += "P:" + escMeCard(pass) + ";";
+      if (f.wifiHidden) payload += "H:true;";
+      payload += ";";
+    }
+  }
+  else if (type === "vcard"){
+    var name = req("vcName", f.vcName, "Enter at least a full name for the contact card.");
+    if (f.vcPhone && !PHONE_RE.test(String(f.vcPhone))) errors.vcPhone = "That phone number looks invalid.";
+    if (f.vcEmail && !EMAIL_RE.test(String(f.vcEmail).trim())) errors.vcEmail = "That email address looks invalid.";
+    if (name && !errors.vcPhone && !errors.vcEmail){
+      var parts = name.split(/\s+/);
+      var first = parts[0], last = parts.length > 1 ? parts[parts.length - 1] : "";
+      var lines = ["BEGIN:VCARD", "VERSION:3.0",
+        "N:" + escVCard(last) + ";" + escVCard(first) + ";;;",
+        "FN:" + escVCard(name)];
+      if (f.vcOrg) lines.push("ORG:" + escVCard(f.vcOrg));
+      if (f.vcTitle) lines.push("TITLE:" + escVCard(f.vcTitle));
+      if (f.vcPhone) lines.push("TEL;TYPE=CELL:" + cleanPhone(f.vcPhone));
+      if (f.vcEmail) lines.push("EMAIL:" + String(f.vcEmail).trim());
+      if (f.vcUrl) lines.push("URL:" + String(f.vcUrl).trim());
+      if (f.vcStreet || f.vcCity || f.vcZip || f.vcCountry)
+        lines.push("ADR:;;" + escVCard(f.vcStreet || "") + ";" + escVCard(f.vcCity || "") + ";;" +
+          escVCard(f.vcZip || "") + ";" + escVCard(f.vcCountry || ""));
+      if (f.vcNote) lines.push("NOTE:" + escVCard(f.vcNote));
+      lines.push("END:VCARD");
+      payload = lines.join("\n");
+    }
+  }
+  else if (type === "email"){
+    var to = req("emTo", f.emTo, "Enter the recipient's email address.");
+    if (to && !EMAIL_RE.test(to)) errors.emTo = "That email address looks invalid.";
+    if (to && !errors.emTo){
+      var params = [];
+      if (f.emSubject) params.push("subject=" + encodeURIComponent(f.emSubject));
+      if (f.emBody) params.push("body=" + encodeURIComponent(f.emBody));
+      payload = "mailto:" + to + (params.length ? "?" + params.join("&") : "");
+    }
+  }
+  else if (type === "sms"){
+    var num = req("smsNumber", f.smsNumber, "Enter a phone number.");
+    if (num && !PHONE_RE.test(num)) errors.smsNumber = "That phone number looks invalid.";
+    if (num && !errors.smsNumber){
+      payload = "SMSTO:" + cleanPhone(num);
+      if (f.smsMsg) payload += ":" + f.smsMsg;
+    }
+  }
+  else if (type === "phone"){
+    var ph = req("phNumber", f.phNumber, "Enter a phone number.");
+    if (ph && !PHONE_RE.test(ph)) errors.phNumber = "That phone number looks invalid.";
+    if (ph && !errors.phNumber) payload = "tel:" + cleanPhone(ph);
+  }
+  else if (type === "geo"){
+    var latS = req("geoLat", f.geoLat, "Enter the latitude."), lngS = req("geoLng", f.geoLng, "Enter the longitude.");
+    var lat = Number(latS), lng = Number(lngS);
+    if (latS && (isNaN(lat) || lat < -90 || lat > 90)) errors.geoLat = "Latitude must be a number between −90 and 90.";
+    if (lngS && (isNaN(lng) || lng < -180 || lng > 180)) errors.geoLng = "Longitude must be a number between −180 and 180.";
+    if (latS && lngS && !errors.geoLat && !errors.geoLng) payload = "geo:" + lat + "," + lng;
+  }
+  if (Object.keys(errors).length) return { errors: errors };
+  return { payload: payload };
+}
+/* PURE-CORE-END */
+</script>
+
+<script>
+"use strict";
+/* ================= APP ================= */
+var $ = function(id){ return document.getElementById(id); };
+var FIELD_IDS = {
+  text: ["text"], url: ["url"],
+  wifiSsid: "wifi-ssid", wifiPass: "wifi-pass",
+  vcName: "vc-name", vcOrg: "vc-org", vcTitle: "vc-title", vcPhone: "vc-phone", vcEmail: "vc-email",
+  vcUrl: "vc-url", vcStreet: "vc-street", vcCity: "vc-city", vcZip: "vc-zip", vcCountry: "vc-country", vcNote: "vc-note",
+  emTo: "em-to", emSubject: "em-subject", emBody: "em-body",
+  smsNumber: "sms-number", smsMsg: "sms-msg", phNumber: "ph-number",
+  geoLat: "geo-lat", geoLng: "geo-lng"
+};
+var ID_TO_KEY = {};
+Object.keys(FIELD_IDS).forEach(function(k){
+  if (k !== "text" && k !== "url") ID_TO_KEY["f-" + FIELD_IDS[k]] = k;
+});
+ID_TO_KEY["f-text"] = "text"; ID_TO_KEY["f-url"] = "url";
+var ERR_WRAP = { text: "f-text-wrap", url: "f-url-wrap", wifiSsid: "f-wifi-ssid-wrap", wifiPass: "f-wifi-pass-wrap",
+  vcName: "f-vc-name-wrap", vcPhone: "f-vc-phone-wrap", vcEmail: "f-vc-email-wrap", emTo: "f-em-to-wrap",
+  smsNumber: "f-sms-number-wrap", phNumber: "f-ph-number-wrap", geoLat: "f-geo-lat-wrap", geoLng: "f-geo-lng-wrap" };
+var ERR_EL = { text: "e-text", url: "e-url", wifiSsid: "e-wifi-ssid", wifiPass: "e-wifi-pass",
+  vcName: "e-vc-name", vcPhone: null, vcEmail: null, emTo: "e-em-to",
+  smsNumber: "e-sms-number", phNumber: "e-ph-number", geoLat: "e-geo-lat", geoLng: "e-geo-lng" };
+// vcPhone / vcEmail ferr elements exist by id pattern:
+ERR_EL.vcPhone = "e-vc-phone"; ERR_EL.vcEmail = "e-vc-email";
+
+var currentType = "text", ecLevel = "M";
+var lastResult = null; // { matrix, size, version, payload }
+var pngUrl = null, svgUrl = null;
+
+function readFields(){
+  var f = {};
+  Object.keys(ID_TO_KEY).forEach(function(id){ f[ID_TO_KEY[id]] = $(id).value; });
+  f.wifiEnc = $("f-wifi-enc").value;
+  f.wifiHidden = $("f-wifi-hidden").checked;
+  return f;
+}
+function clearErrors(){
+  Object.keys(ERR_WRAP).forEach(function(k){
+    var w = $(ERR_WRAP[k]); if (w) w.classList.remove("invalid");
+  });
+}
+function showErrors(errors){
+  clearErrors();
+  var firstMsg = "";
+  Object.keys(errors).forEach(function(k){
+    var w = $(ERR_WRAP[k]); if (w) w.classList.add("invalid");
+    var e = ERR_EL[k] ? $(ERR_EL[k]) : null; if (e) e.textContent = errors[k];
+    if (!firstMsg) firstMsg = errors[k];
+  });
+  var fm = $("formMsg"); fm.textContent = firstMsg; fm.className = "msg error";
+}
+function hideMsg(){ var fm = $("formMsg"); fm.textContent = ""; fm.className = "msg"; }
+function revoke(url){ if (url){ try { URL.revokeObjectURL(url); } catch(e){} } }
+
+function renderDownloads(){
+  if (!lastResult) return;
+  var size = lastResult.size, matrix = lastResult.matrix;
+  var target = parseInt($("pngSize").value, 10);
+  var modulePx = Math.max(1, Math.floor(target / (size + 8)));
+  var px = (size + 8) * modulePx;
+  var canvas = $("qrCanvas");
+  canvas.width = px; canvas.height = px;
+  var ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, px, px);
+  ctx.fillStyle = "#000000";
+  for (var r = 0; r < size; r++) for (var c = 0; c < size; c++)
+    if (matrix[r][c]) ctx.fillRect((c + 4) * modulePx, (r + 4) * modulePx, modulePx, modulePx);
+  canvas.style.display = "block";
+  $("previewEmpty").style.display = "none";
+  canvas.toBlob(function(blob){
+    revoke(pngUrl); pngUrl = URL.createObjectURL(blob);
+    var a = $("dlPng"); a.href = pngUrl; a.style.pointerEvents = "auto"; a.style.opacity = "1";
+  }, "image/png");
+  var svg = qrSvgString(matrix, 8);
+  revoke(svgUrl); svgUrl = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
+  var s = $("dlSvg"); s.href = svgUrl; s.style.pointerEvents = "auto"; s.style.opacity = "1";
+  $("qrMeta").innerHTML = "QR version <strong>" + lastResult.version + "</strong> · " + size + " × " + size +
+    " modules · error correction <strong>" + ecLevel + "</strong> · PNG " + px + " × " + px + " px";
+}
+
+function generate(showOk){
+  hideMsg(); clearErrors();
+  var built = buildPayload(currentType, readFields());
+  if (built.errors){ showErrors(built.errors); return false; }
+  var payload = built.payload;
+  var bytes = new TextEncoder().encode(payload).length;
+  var res = qrEncode(payload, ecLevel, -1);
+  if (!res){
+    var fm = $("formMsg");
+    fm.textContent = "This content is too long for one QR code at error-correction level " + ecLevel +
+      " (about " + qrMaxBytes(ecLevel) + " characters maximum). Shorten the content, or choose a lower error-correction level.";
+    fm.className = "msg error";
+    return false;
+  }
+  lastResult = { matrix: res.matrix, size: res.size, version: res.version, payload: payload };
+  $("payloadView").value = payload;
+  $("payloadMeta").innerHTML = "<strong>" + bytes + "</strong> bytes encoded" +
+    (payload.indexOf("\n") >= 0 ? " · line breaks shown as stored in the code" : "");
+  renderDownloads();
+  if (showOk !== false){
+    var fm2 = $("formMsg");
+    fm2.textContent = "Your QR code is ready — download the PNG or SVG below the preview.";
+    fm2.className = "msg ok";
+  }
+  return true;
+}
+
+/* Type switching */
+$("types").addEventListener("click", function(e){
+  var btn = e.target.closest("button"); if (!btn) return;
+  currentType = btn.getAttribute("data-type");
+  this.querySelectorAll("button").forEach(function(b){ b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
+  document.querySelectorAll(".grp").forEach(function(g){ g.classList.remove("active"); });
+  $("grp-" + currentType).classList.add("active");
+  hideMsg(); clearErrors();
+  livePreview();
+});
+/* Wi-Fi: password not needed when 'nopass' */
+$("f-wifi-enc").addEventListener("change", function(){
+  $("f-wifi-pass").disabled = this.value === "nopass";
+});
+/* EC level */
+$("ecSeg").addEventListener("click", function(e){
+  var btn = e.target.closest("button"); if (!btn) return;
+  ecLevel = btn.getAttribute("data-ec");
+  this.querySelectorAll("button").forEach(function(b){ b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
+  if (lastResult) generate(false);
+});
+$("pngSize").addEventListener("change", function(){ if (lastResult) renderDownloads(); });
+$("go").addEventListener("click", function(){ generate(true); });
+
+/* Live payload preview: rebuild silently on input (no error nagging until Generate) */
+var liveTimer = null;
+function livePreview(){
+  var built = buildPayload(currentType, readFields());
+  if (built.errors){ return; }
+  $("payloadView").value = built.payload;
+  var bytes = new TextEncoder().encode(built.payload).length;
+  $("payloadMeta").innerHTML = "<strong>" + bytes + "</strong> bytes · updates as you type — tap Generate to render the code";
+}
+document.querySelectorAll("input, textarea, select").forEach(function(el){
+  el.addEventListener("input", function(){
+    clearTimeout(liveTimer); liveTimer = setTimeout(livePreview, 250);
+  });
+});
+livePreview();
+</script>
+</body>
+</html>
